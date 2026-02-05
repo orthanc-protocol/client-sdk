@@ -1,0 +1,11 @@
+src/
+examples/
+scripts/
+.github/
+.eslintrc.json
+tsconfig.json
+tsconfig.esm.json
+vitest.config.ts
+*.test.ts
+__tests__/
+.gitignore
