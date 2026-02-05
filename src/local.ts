@@ -104,6 +104,7 @@ export class LocalMemoryStore {
       count: scored.length,
       queryType,
       latency_ms: Date.now() - startTime,
+      requestId: `local_${Date.now()}`,
     };
   }
 
@@ -154,10 +155,15 @@ export class LocalMemoryStore {
     return {
       status: "completed",
       message: "Memories synced successfully",
+      requestId: `local_${Date.now()}`,
       inputFormat: request.text ? "text" : "messages",
-      memoriesCreated,
-      memoriesUpdated: 0,
-      latency_ms: Date.now() - startTime,
+      result: {
+        factsExtracted: memoriesCreated,
+        memoriesInserted: memoriesCreated,
+        memoriesUpdated: 0,
+        memoriesSkipped: 0,
+        latency_ms: Date.now() - startTime,
+      },
     };
   }
 

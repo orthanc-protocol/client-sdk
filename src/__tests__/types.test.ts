@@ -135,10 +135,12 @@ describe("Type definitions", () => {
         count: 1,
         queryType: "vector_search",
         latency_ms: 150,
+        requestId: "test-123",
       };
 
       expect(response.memories.length).toBe(1);
       expect(response.scores.length).toBe(1);
+      expect(response.requestId).toBe("test-123");
     });
   });
 
@@ -169,10 +171,12 @@ describe("Type definitions", () => {
       const response: SyncResponse = {
         status: "completed",
         message: "Sync completed",
+        requestId: "test-123",
         inputFormat: "messages",
       };
 
       expect(response.status).toBe("completed");
+      expect(response.requestId).toBe("test-123");
     });
   });
 

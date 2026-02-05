@@ -82,7 +82,7 @@ export class OrthancsClient {
           errorBody = { error: response.statusText };
         }
 
-        const error = parseErrorResponse(response.status, errorBody, requestId);
+        const error = parseErrorResponse(response.status, errorBody as { error?: string; code?: string; message?: string }, requestId);
 
         if (isRetryable(error) && attempt < this.retries) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
@@ -93,10 +93,10 @@ export class OrthancsClient {
         throw error;
       }
 
-      const data = await response.json();
+      const data = await response.json() as T;
       const metadata: RequestMetadata = {
         requestId: requestId || "",
-        latency_ms: data.latency_ms || 0,
+        latency_ms: (data as Record<string, unknown>).latency_ms as number || 0,
         rateLimitRemaining: rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : undefined,
         rateLimitReset: rateLimitReset ? parseInt(rateLimitReset, 10) : undefined,
       };
@@ -143,7 +143,7 @@ export class OrthancsClient {
     options?: QueryOptions
   ): Promise<MemoryResponse> {
     if (this.cache) {
-      const cached = this.cache.get<MemoryResponse>(userId, query, options);
+      const cached = this.cache.get<MemoryResponse>(userId, query, options as Record<string, unknown>);
       if (cached) {
         return cached;
       }
@@ -156,7 +156,7 @@ export class OrthancsClient {
     });
 
     if (this.cache) {
-      this.cache.set(userId, query, data, options);
+      this.cache.set(userId, query, data, options as Record<string, unknown>);
     }
 
     return data;

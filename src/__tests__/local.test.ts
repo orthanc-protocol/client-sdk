@@ -81,7 +81,7 @@ describe("LocalMemoryStore", () => {
 
       expect(result.status).toBe("completed");
       expect(result.inputFormat).toBe("text");
-      expect(result.memoriesCreated).toBeGreaterThan(0);
+      expect(result.result?.memoriesInserted).toBeGreaterThan(0);
     });
 
     it("should sync messages", async () => {
@@ -95,7 +95,7 @@ describe("LocalMemoryStore", () => {
 
       expect(result.status).toBe("completed");
       expect(result.inputFormat).toBe("messages");
-      expect(result.memoriesCreated).toBe(1);
+      expect(result.result?.memoriesInserted).toBe(1);
     });
 
     it("should ignore short text segments", async () => {
@@ -104,7 +104,7 @@ describe("LocalMemoryStore", () => {
         text: "Hi. Ok. Yes. This is a longer sentence that should be stored.",
       });
 
-      expect(result.memoriesCreated).toBe(1);
+      expect(result.result?.memoriesInserted).toBe(1);
     });
   });
 
