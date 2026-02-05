@@ -1,3 +1,22 @@
+<p align="center">
+  <img src="orthanc-banner.png" alt="Orthanc Protocol - Long-Term Memory for AI Agents" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@orthanc-protocol/client"><img src="https://img.shields.io/npm/v/@orthanc-protocol/client?color=blue&label=npm" alt="npm version"></a>
+  <a href="https://github.com/orthanc-protocol/client-sdk/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="License"></a>
+  <a href="https://github.com/orthanc-protocol/client-sdk"><img src="https://img.shields.io/badge/TypeScript-100%25-blue" alt="TypeScript"></a>
+  <a href="https://api.orthanc.ai"><img src="https://img.shields.io/badge/API%20latency-%3C200ms-brightgreen" alt="API Latency"></a>
+</p>
+
+<p align="center">
+  <a href="https://orthanc.ai">Website</a> •
+  <a href="https://github.com/orthanc-protocol/client-sdk/blob/main/docs/protocol.md">Protocol Docs</a> •
+  <a href="https://orthanc.ai/pricing">Pricing</a>
+</p>
+
+---
+
 # Orthanc Client SDK
 
 The open source SDK for querying agent memory. Build with a standard interface that works everywhere.
