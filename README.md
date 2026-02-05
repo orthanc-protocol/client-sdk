@@ -30,6 +30,33 @@ console.log(result.memories);
 
 That's it. Your agent now has access to long term memory.
 
+## Try it now (Public Demo Key)
+
+Want to test without signing up? Use our public demo key:
+
+```typescript
+import { OrthancsClient } from "@orthanc-protocol/client";
+
+const client = new OrthancsClient({
+  endpoint: "https://api.orthanc.ai",
+  apiKey: "orth_demo_public_2026",  // Public demo key
+});
+
+// Store a memory
+await client.syncMessages("demo-user", [
+  { role: "user", content: "I love hiking in the mountains" },
+  { role: "assistant", content: "That sounds wonderful!" }
+]);
+
+// Query memories (~150ms from production servers)
+const result = await client.query("demo-user", "What are my hobbies?");
+console.log(result.memories);     // ["User loves hiking in the mountains"]
+console.log(result.latency_ms);   // ~150ms
+console.log(result.queryType);    // "question_match"
+```
+
+> **Note:** The demo key is rate-limited and shared. Get your own key at [orthanc.ai](https://orthanc.ai) for production use.
+
 ## Features
 
 ### Query memory
@@ -43,10 +70,11 @@ const result = await client.query("user-123", "What are my hobbies?", {
   timeFilter: "month",
 });
 
-console.log(result.memories);
-console.log(result.scores);
-console.log(result.queryType);
-console.log(result.latency_ms);
+console.log(result.memories);     // Array of memory strings
+console.log(result.scores);       // Relevance scores (0-1)
+console.log(result.queryType);    // "question_match" | "vector_search" | etc.
+console.log(result.latency_ms);   // Processing time in ms
+console.log(result.requestId);    // Request ID for debugging
 ```
 
 ### Sync memories

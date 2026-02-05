@@ -53,10 +53,16 @@ Response:
   ],
   "scores": [0.92, 0.87],
   "count": 2,
-  "queryType": "vector_search",
+  "queryType": "question_match",
   "latency_ms": 145,
-  "graphAnswer": null,
-  "requestId": "abc123"
+  "requestId": "abc123",
+  "dateFilter": {
+    "startDate": null,
+    "endDate": null,
+    "detected": false,
+    "originalPhrase": null
+  },
+  "piiRedacted": true
 }
 ```
 
@@ -111,20 +117,15 @@ Response:
 {
   "status": "queued",
   "message": "Memory sync queued for processing",
-  "inputFormat": "messages"
-}
-```
-
-When sync option is true:
-
-```json
-{
-  "status": "completed",
-  "message": "Memory sync completed",
+  "requestId": "a7e3da27",
   "inputFormat": "messages",
-  "memoriesCreated": 2,
-  "memoriesUpdated": 0,
-  "latency_ms": 450
+  "result": {
+    "factsExtracted": 3,
+    "memoriesInserted": 3,
+    "memoriesUpdated": 0,
+    "memoriesSkipped": 0,
+    "latency_ms": 975
+  }
 }
 ```
 
@@ -345,11 +346,19 @@ These queries look up a specific entity relationship.
 
 Response includes graphAnswer with the name or identifier.
 
+### question_match
+
+Pattern: "What is my job?" "What are my hobbies?" "Where do I live?"
+
+These queries match against pre-computed question embeddings for ultra-fast retrieval. This is the most common query type and the fastest path.
+
+No graphAnswer, but scores indicate relevance. Typical latency: 100-150ms.
+
 ### vector_search
 
 Pattern: "Tell me about my projects" "What have I been working on?"
 
-These queries use semantic search to find related memories.
+These queries use semantic search to find related memories when question_match doesn't find results.
 
 No graphAnswer, but scores indicate relevance.
 

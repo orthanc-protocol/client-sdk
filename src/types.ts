@@ -1,5 +1,6 @@
 /**
  * Core type definitions for the Orthanc Protocol
+ * Updated to match production API at api.orthanc.ai
  */
 
 export type QueryType = 
@@ -7,6 +8,7 @@ export type QueryType =
   | "graph_list"
   | "graph_who"
   | "vector_search"
+  | "question_match"  // Fast path - matches pre-computed question embeddings
   | "hybrid";
 
 export type TimeFilter = "hour" | "day" | "week" | "month" | "year" | "all";
@@ -44,18 +46,24 @@ export interface Memory {
   metadata?: Record<string, unknown>;
 }
 
+export interface DateFilter {
+  startDate: string | null;
+  endDate: string | null;
+  detected: boolean;
+  originalPhrase: string | null;
+}
+
 export interface MemoryResponse {
   memories: string[];
   scores: number[];
   count: number;
   queryType: QueryType;
   latency_ms: number;
-  graphAnswer?: string;
-  dateFilter?: {
-    detected: boolean;
-    startDate?: string;
-    endDate?: string;
-  };
+  requestId: string;
+  graphAnswer?: string | null;
+  dateFilter?: DateFilter;
+  piiRedacted?: boolean;
+  reranked?: boolean;
 }
 
 export interface DetailedMemoryResponse {
@@ -63,7 +71,8 @@ export interface DetailedMemoryResponse {
   count: number;
   queryType: QueryType;
   latency_ms: number;
-  graphAnswer?: string;
+  requestId: string;
+  graphAnswer?: string | null;
   pagination?: {
     offset: number;
     limit: number;
@@ -92,13 +101,20 @@ export interface SyncRequest {
   metadata?: Record<string, unknown>;
 }
 
+export interface SyncResult {
+  factsExtracted: number;
+  memoriesInserted: number;
+  memoriesUpdated: number;
+  memoriesSkipped: number;
+  latency_ms: number;
+}
+
 export interface SyncResponse {
   status: "queued" | "processing" | "completed";
   message: string;
+  requestId: string;
   inputFormat: "messages" | "text";
-  memoriesCreated?: number;
-  memoriesUpdated?: number;
-  latency_ms?: number;
+  result?: SyncResult;
 }
 
 export interface BatchOperation {
@@ -183,14 +199,22 @@ export interface WebhookCreateRequest {
   name?: string;
 }
 
+export interface ServiceCheck {
+  status: "up" | "down" | "warning";
+  latency_ms?: number;
+  heapUsed?: string;
+}
+
 export interface HealthResponse {
   status: "healthy" | "degraded" | "unhealthy";
+  timestamp: string;
   version: string;
+  uptime_seconds: number;
   latency_ms: number;
-  services: {
-    database: "up" | "down";
-    embeddings: "up" | "down";
-    inference: "up" | "down";
+  checks: {
+    database: ServiceCheck;
+    memory: ServiceCheck;
+    environment: ServiceCheck;
   };
 }
 

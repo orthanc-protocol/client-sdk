@@ -1,6 +1,6 @@
 {
   "name": "@orthanc-protocol/client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Universal SDK for querying agent memory. The Orthanc Protocol standard.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

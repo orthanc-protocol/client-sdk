@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-05
+
+### Changed
+
+- Updated types to match production API at api.orthanc.ai
+- MemoryResponse now includes `requestId`, `piiRedacted`, `reranked` fields
+- SyncResponse now uses `result` object with `factsExtracted`, `memoriesInserted`, `memoriesUpdated`, `memoriesSkipped`
+- HealthResponse now uses `checks` object instead of `services`
+- DateFilter type updated to match API response format
+
+### Added
+
+- `question_match` QueryType for fast-path retrieval
+- Public demo API key (`orth_demo_public_2026`) for testing
+- `SyncResult` type for sync response details
+- `ServiceCheck` type for health check details
+- `DateFilter` type export
+
 ## [0.1.0] - 2026-02-04
 
 ### Added
