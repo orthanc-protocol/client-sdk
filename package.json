@@ -3,22 +3,54 @@
   "version": "0.1.0",
   "description": "Universal SDK for querying agent memory. The Orthanc Protocol standard.",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.esm.json",
     "dev": "tsc --watch",
-    "test": "node --test dist/**/*.test.js"
+    "test": "node --test dist/**/*.test.js",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "memory",
     "agent",
     "ai",
+    "llm",
     "protocol",
-    "orthanc"
+    "orthanc",
+    "langchain",
+    "openai",
+    "anthropic"
   ],
   "author": "Orthanc",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orthanc-protocol/client-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orthanc-protocol/client-sdk/issues"
+  },
+  "homepage": "https://github.com/orthanc-protocol/client-sdk#readme",
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

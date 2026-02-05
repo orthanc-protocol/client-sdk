@@ -1,41 +1,49 @@
 # The Orthanc Protocol
 
-This document describes the standard interface for querying agent memory systems.
+This document describes the complete interface for querying agent memory systems.
 
 ## Overview
 
-The Orthanc Protocol defines how agents request memory and how memory systems respond. It's simple, universal, and works everywhere.
+The Orthanc Protocol defines how agents request memory and how memory systems respond. By implementing this protocol, your memory backend becomes compatible with any client built on the Orthanc SDK.
 
-By implementing this protocol, your memory backend becomes compatible with any client built on the Orthanc SDK.
+## Authentication
 
-## Request Format
+All requests require a Bearer token in the Authorization header:
 
-Every memory query follows this structure:
+```
+Authorization: Bearer sk-mem-xxx
+```
+
+The token is issued when you create an account and is tied to your project.
+
+## Endpoints
+
+### Query Memory
+
+Retrieve relevant memories for a user query.
+
+```
+POST /api/context
+```
+
+Request body:
 
 ```json
 {
   "userId": "user-123",
-  "query": "What do I like?",
+  "messages": [
+    { "role": "user", "content": "What do I like?" }
+  ],
   "options": {
     "matchThreshold": 0.5,
     "matchCount": 5,
-    "timeFilter": "all"
+    "timeFilter": "all",
+    "includeMetadata": false
   }
 }
 ```
 
-Field descriptions:
-
-- userId: Your application's user identifier. This is how the memory system knows which user's memories to search.
-- query: What the agent is asking for. Can be a question, a statement, or anything that helps identify relevant memories.
-- options: Optional configuration for the query behavior.
-  - matchThreshold: Minimum relevance score (0 to 1). Lower values return more results but less relevant ones.
-  - matchCount: Maximum number of memories to return. Default is 5.
-  - timeFilter: How far back to search. Options are hour, day, week, month, year, or all.
-
-## Response Format
-
-Every memory backend returns results in this format:
+Response:
 
 ```json
 {
@@ -47,22 +55,271 @@ Every memory backend returns results in this format:
   "count": 2,
   "queryType": "vector_search",
   "latency_ms": 145,
-  "graphAnswer": null
+  "graphAnswer": null,
+  "requestId": "abc123"
 }
 ```
 
-Field descriptions:
+### Sync Memory
 
-- memories: Array of relevant memories as strings.
-- scores: Relevance scores for each memory (0 to 1, where 1 is perfect match).
-- count: Number of memories returned.
-- queryType: How the query was answered. Can be graph_relation, graph_list, vector_search, or hybrid.
-- latency_ms: How long the query took in milliseconds.
-- graphAnswer: If the query was answered by a graph lookup, this contains the direct answer. Otherwise null.
+Ingest new memories from messages or text.
+
+```
+POST /api/sync
+```
+
+Request body with messages:
+
+```json
+{
+  "userId": "user-123",
+  "messages": [
+    { "role": "user", "content": "I love hiking and my dog is named Max" },
+    { "role": "assistant", "content": "That's great!" }
+  ],
+  "options": {
+    "source": "chat",
+    "sourceName": "Mobile App",
+    "infer": true,
+    "sync": false,
+    "tags": ["preference"],
+    "importance": 8,
+    "category": "hobby"
+  },
+  "metadata": {
+    "conversation_id": "conv-456"
+  }
+}
+```
+
+Request body with raw text:
+
+```json
+{
+  "userId": "user-123",
+  "text": "User loves hiking and has a dog named Max",
+  "options": {
+    "source": "import",
+    "infer": false
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "status": "queued",
+  "message": "Memory sync queued for processing",
+  "inputFormat": "messages"
+}
+```
+
+When sync option is true:
+
+```json
+{
+  "status": "completed",
+  "message": "Memory sync completed",
+  "inputFormat": "messages",
+  "memoriesCreated": 2,
+  "memoriesUpdated": 0,
+  "latency_ms": 450
+}
+```
+
+### Batch Operations
+
+Perform multiple memory operations in a single request.
+
+```
+POST /api/memories/batch
+```
+
+Request body:
+
+```json
+{
+  "userId": "user-123",
+  "operations": [
+    {
+      "action": "create",
+      "text": "User likes coffee"
+    },
+    {
+      "action": "update",
+      "id": "mem-uuid-1",
+      "updates": {
+        "category": "food",
+        "tags": ["preference", "beverage"]
+      }
+    },
+    {
+      "action": "delete",
+      "id": "mem-uuid-2"
+    }
+  ]
+}
+```
+
+Response:
+
+```json
+{
+  "processed": 3,
+  "results": {
+    "created": 1,
+    "updated": 1,
+    "deleted": 1,
+    "failed": 0
+  }
+}
+```
+
+With errors:
+
+```json
+{
+  "processed": 3,
+  "results": {
+    "created": 1,
+    "updated": 0,
+    "deleted": 1,
+    "failed": 1
+  },
+  "errors": [
+    {
+      "index": 1,
+      "error": "Memory not found"
+    }
+  ]
+}
+```
+
+### Export Memories
+
+Export memories for data portability.
+
+```
+GET /api/memories/export?userId=user-123&limit=100&offset=0&format=json
+```
+
+Query parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| userId | string | none | Filter by user |
+| limit | number | 100 | Max memories to return |
+| offset | number | 0 | Pagination offset |
+| format | string | json | Response format (json or csv) |
+| includeEmbeddings | boolean | false | Include embedding vectors |
+
+Response:
+
+```json
+{
+  "userId": "user-123",
+  "exportedAt": "2026-02-04T12:00:00Z",
+  "total": 247,
+  "count": 100,
+  "hasMore": true,
+  "memories": [
+    {
+      "id": "mem-uuid",
+      "content": "User likes coffee",
+      "score": 1,
+      "createdAt": "2026-01-15T10:30:00Z",
+      "category": "food",
+      "tags": ["preference"],
+      "metadata": {}
+    }
+  ]
+}
+```
+
+### Webhooks
+
+Create webhooks for real-time notifications.
+
+```
+POST /api/webhooks
+```
+
+Request body:
+
+```json
+{
+  "url": "https://your-server.com/webhook",
+  "events": ["memory.created", "memory.updated", "memory.deleted"],
+  "secret": "your-hmac-secret",
+  "name": "Production Webhook"
+}
+```
+
+Response:
+
+```json
+{
+  "webhook": {
+    "id": "wh-uuid",
+    "url": "https://your-server.com/webhook",
+    "events": ["memory.created", "memory.updated", "memory.deleted"],
+    "enabled": true,
+    "createdAt": "2026-02-04T12:00:00Z"
+  }
+}
+```
+
+List webhooks:
+
+```
+GET /api/webhooks
+```
+
+Get webhook:
+
+```
+GET /api/webhooks/{id}
+```
+
+Update webhook:
+
+```
+PATCH /api/webhooks/{id}
+```
+
+Delete webhook:
+
+```
+DELETE /api/webhooks/{id}
+```
+
+### Health Check
+
+Check the status of the memory backend.
+
+```
+GET /api/health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "latency_ms": 5,
+  "services": {
+    "database": "up",
+    "embeddings": "up",
+    "inference": "up"
+  }
+}
+```
 
 ## Query Types
 
-The protocol supports different query types for different question patterns:
+The protocol supports different query types for different question patterns.
 
 ### graph_relation
 
@@ -80,9 +337,17 @@ These queries traverse a graph to find all items matching a relationship.
 
 Response includes graphAnswer with a summary.
 
+### graph_who
+
+Pattern: "Who is my wife?" "Who is my manager?"
+
+These queries look up a specific entity relationship.
+
+Response includes graphAnswer with the name or identifier.
+
 ### vector_search
 
-Pattern: "Tell me about my projects" "What have I been working on?" Open ended questions
+Pattern: "Tell me about my projects" "What have I been working on?"
 
 These queries use semantic search to find related memories.
 
@@ -90,42 +355,133 @@ No graphAnswer, but scores indicate relevance.
 
 ### hybrid
 
-Pattern: Long complex queries with multiple topics
+Pattern: Long complex queries with multiple topics.
 
 These queries combine both graph and vector search for comprehensive results.
 
 May include graphAnswer plus additional vector results.
 
-## Implementing the Protocol
+## Time Filters
 
-To build a memory backend that speaks Orthanc, you need to:
+The timeFilter option restricts results to a specific time window:
 
-1. Accept POST requests at /api/context with the request format above
-2. Parse userId and query
-3. Detect the query type (you can use heuristics or a classifier)
-4. For graph queries, perform graph lookups
-5. For vector queries, embed the query and search similar memories
-6. Return results in the response format above
+| Value | Description |
+|-------|-------------|
+| hour | Last 60 minutes |
+| day | Last 24 hours |
+| week | Last 7 days |
+| month | Last 30 days |
+| year | Last 365 days |
+| all | No time restriction |
 
-The reference implementation shows how to do all of this.
+## Source Types
+
+When syncing memories, the source field tracks where the memory came from:
+
+| Value | Description |
+|-------|-------------|
+| api | Direct API call |
+| chat | Chat conversation |
+| voice | Voice transcription |
+| file_upload | Uploaded file |
+| import | Bulk import |
+| webhook | External webhook |
+| sdk | SDK client |
+
+## Webhook Events
+
+Webhooks can subscribe to these events:
+
+| Event | Description |
+|-------|-------------|
+| memory.created | New memory stored |
+| memory.updated | Memory updated (contradiction resolved) |
+| memory.deleted | Memory removed |
+| memory.batch_created | Batch operation created memories |
+| memory.batch_deleted | Batch operation deleted memories |
+
+Webhook payload:
+
+```json
+{
+  "event": "memory.created",
+  "timestamp": "2026-02-04T12:00:00Z",
+  "data": {
+    "userId": "user-123",
+    "memories": ["User likes coffee"],
+    "source": "chat"
+  }
+}
+```
+
+If a secret is provided, requests include an X-Webhook-Signature header with HMAC-SHA256 signature.
+
+## Error Responses
+
+All errors follow this format:
+
+```json
+{
+  "error": "Description of what went wrong",
+  "code": "ERROR_CODE",
+  "requestId": "abc123"
+}
+```
+
+Error codes:
+
+| Code | Status | Description |
+|------|--------|-------------|
+| MISSING_AUTH | 401 | No Authorization header |
+| INVALID_AUTH | 401 | Invalid API key |
+| AUTHORIZATION_ERROR | 403 | Not authorized for this resource |
+| VALIDATION_ERROR | 400 | Invalid request body |
+| NOT_FOUND | 404 | Resource not found |
+| RATE_LIMIT_ERROR | 429 | Too many requests |
+| USAGE_LIMIT_ERROR | 429 | Monthly usage limit exceeded |
+| TIMEOUT | 408 | Request timed out |
+| SERVER_ERROR | 500 | Internal server error |
+
+## Rate Limiting
+
+Rate limits are enforced per API key:
+
+| Plan | Requests per minute |
+|------|---------------------|
+| Starter | 60 |
+| Pro | 600 |
+| Scale | 3000 |
+
+Rate limit headers are included in all responses:
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1707048000
+```
 
 ## Standards
 
 All memory systems using the Orthanc Protocol should follow these standards:
 
-- Latency target: under 350ms for 95th percentile
-- Scores: Always return between 0 and 1
-- Timestamps: Store all memories with created_at
-- User isolation: Ensure queries only return that user's memories
-- Error handling: Return HTTP 400 for bad requests, 500 for server errors
+1. Latency target: under 350ms for 95th percentile
+2. Scores: Always return between 0 and 1
+3. Timestamps: Store all memories with created_at in ISO 8601 format
+4. User isolation: Ensure queries only return that user's memories
+5. Error handling: Return appropriate HTTP status codes with error details
+6. Request IDs: Include X-Request-ID header in all responses
 
-## Why this matters
+## Implementing the Protocol
 
-By standardizing the interface, we make it possible to:
+To build a memory backend that speaks Orthanc:
 
-- Build once, run anywhere. Your code doesn't change when you switch backends.
-- Compare different memory systems. They all speak the same language.
-- Focus on what matters. You think about your agent's behavior, not memory infrastructure.
-- Create a community ecosystem. Anyone can build a memory backend or integrate with Orthanc.
+1. Accept POST requests at /api/context with the query format
+2. Accept POST requests at /api/sync with the sync format
+3. Accept POST requests at /api/memories/batch with the batch format
+4. Accept GET requests at /api/memories/export with query parameters
+5. Implement webhook management at /api/webhooks
+6. Return responses in the documented formats
+7. Include rate limit headers
+8. Include request ID headers
 
-This is the goal. Make agent memory a solved problem.
+The reference implementation in this repository shows how to do all of this.
