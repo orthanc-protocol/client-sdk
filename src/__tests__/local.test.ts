@@ -61,7 +61,7 @@ describe("LocalMemoryStore", () => {
       const relationResult = await store.query("user-1", "Do I like pizza?");
       expect(relationResult.queryType).toBe("graph_relation");
 
-      const listResult = await store.query("user-1", "What do I like?");
+      const listResult = await store.query("user-1", "List my favorite foods");
       expect(listResult.queryType).toBe("graph_list");
 
       const whoResult = await store.query("user-1", "Who is my friend?");
@@ -184,8 +184,8 @@ describe("LocalMemoryStore", () => {
 
   describe("export", () => {
     it("should export all memories for a user", async () => {
-      await store.sync({ userId: "user-1", text: "Memory one. Memory two." });
-      await store.sync({ userId: "user-2", text: "Memory three." });
+      await store.sync({ userId: "user-1", text: "This is the first memory here. This is the second memory here." });
+      await store.sync({ userId: "user-2", text: "This is the third memory here." });
 
       const result = await store.export("user-1");
 
@@ -245,8 +245,8 @@ describe("LocalMemoryStore", () => {
 
   describe("getStats", () => {
     it("should return correct stats", async () => {
-      await store.sync({ userId: "user-1", text: "Memory one. Memory two." });
-      await store.sync({ userId: "user-2", text: "Memory three." });
+      await store.sync({ userId: "user-1", text: "This is the first memory. This is the second memory." });
+      await store.sync({ userId: "user-2", text: "This is the third memory." });
 
       const stats = store.getStats();
 
